@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Monitor</title>
+    <style>
+        /* Styling remains the same */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+        }
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        form label {
+            font-weight: bold;
+            margin: 10px 0 5px;
+            display: block;
+        }
+        form input[type="date"],
+        form select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        form button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background-color: #0056b3;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        form button:hover {
+            background-color: #004494;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            margin-top: 0;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        h2 {
+            text-align: center;
+            color: #0056b3;
+        }
+        #results, #summary {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        #results h3, #summary h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        #trend ul, #reviews ul, #summary ul {
+            list-style: none;
+            padding: 0;
+        }
+        #trend li, #reviews li, #summary li {
+            background-color: #f1f1f1;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 6px;
+            border-radius: 4px;
+        }
+        #results p, #summary p {
+            color: #d9534f;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Review Monitor for Dice Dreams</h1>
+
+    <!-- Form to query reviews -->
+    <form id="query-form">
+        <label for="date">Select Date:</label>
+        <input type="date" id="date" name="date" required>
+        
+        <label for="category">Select Category:</label>
+        <select id="category" name="category" required>
+            <option value="Bugs">Bugs</option>
+            <option value="Complaints">Complaints</option>
+            <option value="Crashes">Crashes</option>
+            <option value="Praises">Praises</option>
+            <option value="Other">Other</option>
+        </select>
+        
+        <button type="submit">Get Reviews</button>
+        <button type="button" id="summary-btn" class="btn-secondary">Get Daily Summary</button>
+    </form>
+
+    <h2>Results</h2>
+
+    <!-- Display area for the review results -->
+    <div id="results">
+        <div id="daily-count"></div>
+        <div id="trend"></div>
+        <div id="reviews"></div>
+    </div>
+    
+    <!-- Display area for the daily summary -->
+    <div id="summary">
+        <h3>Daily Summary</h3>
+        <div id="summary-results"></div>
+    </div>
+    
+    <script>
+        // Handle form submission to fetch reviews
+        document.getElementById('query-form').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const date = document.getElementById('date').value;
+            const category = document.getElementById('category').value;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:5001/reviews?date=${date}&category=${category}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                // Display daily count
+                document.getElementById('daily-count').innerHTML = `<h3>Daily Count for ${data.selected_date} (${data.category}): ${data.daily_count}</h3>`;
+
+                // Display 7-day trend
+                let trendHtml = "<h3>7-Day Trend:</h3><ul>";
+                data.trend.forEach(day => {
+                    trendHtml += `<li>${day.date}: ${day.count} reviews</li>`;
+                });
+                trendHtml += "</ul>";
+                document.getElementById('trend').innerHTML = trendHtml;
+
+                // Display reviews for the selected date
+                let reviewsHtml = `<h3>Reviews for ${data.selected_date} (${data.category}):</h3><ul>`;
+                data.reviews.forEach(review => {
+                    reviewsHtml += `<li>${review.date}: ${review.content}</li>`;
+                });
+                reviewsHtml += "</ul>";
+                document.getElementById('reviews').innerHTML = reviewsHtml;
+
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<p>${error.message}</p>`;
+            }
+        };
+
+        // Handle summary button click to fetch daily summary
+        document.getElementById('summary-btn').onclick = async () => {
+            const date = document.getElementById('date').value || new Date().toISOString().split('T')[0]; // Default to today's date if none is selected
+            
+            try {
+                const response = await fetch(`http://127.0.0.1:5001/daily-summary?date=${date}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+
+                const summary = await response.json();
+
+                // Display daily summary
+                let summaryHtml = `<ul>`;
+                summaryHtml += `<li><strong>Date:</strong> ${summary.date}</li>`;
+                summaryHtml += `<li><strong>Total Reviews:</strong> ${summary.total_reviews}</li>`;
+                summaryHtml += `<li><strong>Category Counts:</strong></li><ul>`;
+                
+                for (const [category, count] of Object.entries(summary.category_counts)) {
+                    summaryHtml += `<li>${category}: ${count} reviews</li>`;
+                }
+
+                summaryHtml += `</ul></ul>`;
+                document.getElementById('summary-results').innerHTML = summaryHtml;
+
+            } catch (error) {
+                document.getElementById('summary-results').innerHTML = `<p>${error.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>
