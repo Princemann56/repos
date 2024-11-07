@@ -4,6 +4,7 @@ from app.scraper import scrape_reviews
 from app.utils import generate_daily_summary  # Import the summary function
 from datetime import datetime
 from flask_cors import CORS  # Import CORS
+import os
 
 app = create_app()
 CORS(app)  # Enable CORS for all routes
