@@ -111,6 +111,17 @@ For running the system in production 24/7 for 30 days, with an estimated 5 queri
 
 ---
 
+## Acknowledgements
+
+This project was completed with the assistance of various online resources. I utilized the following tools and sources to support the development of this application:
+
+- **Google**: Used for general research, troubleshooting issues, and finding documentation on Flask, MongoDB, Docker, and other technical aspects of the project.
+- **ChatGPT by OpenAI**: Assisted with code generation, troubleshooting, and providing detailed explanations for various programming concepts and implementation guidance.
+- **Hugging Face Transformers Library**: Used the DistilBERT model from Hugging Face's Transformers library for natural language processing tasks to classify reviews into categories.
+
+
+
+
 ## Collaborators
 
 - **shobhit@segwise.ai**
